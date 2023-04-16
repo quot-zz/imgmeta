@@ -1,0 +1,33 @@
+[tool.poetry]
+name = "image_metadata_extractor"
+version = "0.1.0"
+description = "Script that extracts metadata from a list of jpeg images provided"
+authors = ["Don Chin <don.chin@techwondoe.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+exif = "1.6.0"
+
+[tool.poetry.dev-dependencies]
+pre-commit = "^3.2.2"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 99
+include = '\.pyi?$'
+exclude = '''
+/( 
+      \.git
+    | \.hg
+    | \.mypy_cache
+    | \.tox
+    | \.venv
+    | _build
+    | buck_out
+    | build
+    | dist
+)/
+'''
