@@ -1,15 +1,19 @@
 import datetime as DT
 import os
-
+import json
 from extractor import (
-    extract_image_data,
+    extract_image_metadata,
     extract_file_metadata,
     extract_exif_metadata,
     convert_epoch_to_iso_8601_utc,
+    generate_json_file_path,
+    process_image,
 )
 
 IMAGE_ONE_LOCATION = "tests/data/JAM19896.jpg"
+IMAGE_ONE_JSON_LOCATION = "tests/data/JAM19896.json"
 IMAGE_TWO_LOCATION = "tests/data/JAM26284.jpg"
+IMAGE_TWO_JSON_LOCATION = "tests/data/JAM26284.json"
 
 
 def test_formats_epoch_to_iso_8601_utc_correctly():
@@ -20,26 +24,10 @@ def test_formats_epoch_to_iso_8601_utc_correctly():
 def test_extracts_and_formats_file_metadata_correctly():
 
     # ctime/mtime will change whenever someone downloads the project so can't hardcode
-    img_one_ctime: str = (
-        DT.datetime.fromtimestamp(os.path.getctime(IMAGE_ONE_LOCATION), tz=DT.timezone.utc)
-        .isoformat()
-        .replace("+00:00", "Z")
-    )
-    img_one_mtime: str = (
-        DT.datetime.fromtimestamp(os.path.getmtime(IMAGE_ONE_LOCATION), tz=DT.timezone.utc)
-        .isoformat()
-        .replace("+00:00", "Z")
-    )
-    img_two_ctime: str = (
-        DT.datetime.fromtimestamp(os.path.getctime(IMAGE_TWO_LOCATION), tz=DT.timezone.utc)
-        .isoformat()
-        .replace("+00:00", "Z")
-    )
-    img_two_mtime: str = (
-        DT.datetime.fromtimestamp(os.path.getmtime(IMAGE_TWO_LOCATION), tz=DT.timezone.utc)
-        .isoformat()
-        .replace("+00:00", "Z")
-    )
+    img_one_ctime: str = generate_timestamp(os.path.getctime(IMAGE_ONE_LOCATION))
+    img_one_mtime: str = generate_timestamp(os.path.getmtime(IMAGE_ONE_LOCATION))
+    img_two_ctime: str = generate_timestamp(os.path.getctime(IMAGE_TWO_LOCATION))
+    img_two_mtime: str = generate_timestamp(os.path.getmtime(IMAGE_TWO_LOCATION))
 
     metadata_one: dict = extract_file_metadata(IMAGE_ONE_LOCATION)
     metadata_two: dict = extract_file_metadata(IMAGE_TWO_LOCATION)
@@ -71,29 +59,13 @@ def test_extracts_and_formats_exif_metadata_correctly():
 
 def test_correctly_extracts_all_metadata():
     # ctime/mtime will change whenever someone downloads the project so can't hardcode
-    img_one_ctime: str = (
-        DT.datetime.fromtimestamp(os.path.getctime(IMAGE_ONE_LOCATION), tz=DT.timezone.utc)
-        .isoformat()
-        .replace("+00:00", "Z")
-    )
-    img_one_mtime: str = (
-        DT.datetime.fromtimestamp(os.path.getmtime(IMAGE_ONE_LOCATION), tz=DT.timezone.utc)
-        .isoformat()
-        .replace("+00:00", "Z")
-    )
-    img_two_ctime: str = (
-        DT.datetime.fromtimestamp(os.path.getctime(IMAGE_TWO_LOCATION), tz=DT.timezone.utc)
-        .isoformat()
-        .replace("+00:00", "Z")
-    )
-    img_two_mtime: str = (
-        DT.datetime.fromtimestamp(os.path.getmtime(IMAGE_TWO_LOCATION), tz=DT.timezone.utc)
-        .isoformat()
-        .replace("+00:00", "Z")
-    )
+    img_one_ctime: str = generate_timestamp(os.path.getctime(IMAGE_ONE_LOCATION))
+    img_one_mtime: str = generate_timestamp(os.path.getmtime(IMAGE_ONE_LOCATION))
+    img_two_ctime: str = generate_timestamp(os.path.getctime(IMAGE_TWO_LOCATION))
+    img_two_mtime: str = generate_timestamp(os.path.getmtime(IMAGE_TWO_LOCATION))
 
-    img_one_metadata = extract_image_data(IMAGE_ONE_LOCATION)
-    img_two_metadata = extract_image_data(IMAGE_TWO_LOCATION)
+    img_one_metadata = extract_image_metadata(IMAGE_ONE_LOCATION)
+    img_two_metadata = extract_image_metadata(IMAGE_TWO_LOCATION)
 
     assert img_one_metadata["orientation"] == 1
     assert img_one_metadata["capture_time"] == "2019:07:26 13:25:33"
@@ -114,6 +86,33 @@ def test_correctly_extracts_all_metadata():
     assert img_two_metadata["modified_time"] == img_two_mtime
 
 
+def test_generates_json_file_path():
+    image_one_file_path: str = generate_json_file_path(IMAGE_ONE_LOCATION)
+    assert image_one_file_path == "tests/data/JAM19896.json"
+
+
+def test_writes_json_to_path():
+    img_one_ctime: str = generate_timestamp(os.path.getctime(IMAGE_ONE_LOCATION))
+    img_one_mtime: str = generate_timestamp(os.path.getmtime(IMAGE_ONE_LOCATION))
+
+    if os.path.exists(IMAGE_ONE_JSON_LOCATION):
+        os.remove(IMAGE_ONE_JSON_LOCATION)
+
+    process_image(IMAGE_ONE_LOCATION)
+
+    with open(IMAGE_ONE_JSON_LOCATION, "rb") as json_file:
+        image_dict = json.load(json_file)
+
+        assert image_dict["orientation"] == 1
+        assert image_dict["capture_time"] == "2019:07:26 13:25:33"
+        assert image_dict["camera_model"] == "Canon EOS 5D Mark IV"
+        assert image_dict["camera_serial"] == "025021000537"
+        assert image_dict["filename"] == "JAM19896.jpg"
+        assert image_dict["size"] == 3014190
+        assert image_dict["created_time"] == img_one_ctime
+        assert image_dict["modified_time"] == img_one_mtime
+
+
 def test_handles_missing_values():
     pass
 
@@ -124,3 +123,7 @@ def test_handles_bad_file_names():
 
 def test_handles_duplicate_file_names():
     pass
+
+
+def generate_timestamp(epoch: float):
+    return DT.datetime.fromtimestamp(epoch, tz=DT.timezone.utc).isoformat().replace("+00:00", "Z")

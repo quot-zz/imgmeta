@@ -1,10 +1,20 @@
 import datetime as DT
 import os
+import json
 from typing import Dict
 from exif import Image
 
 
-def extract_image_data(image_location: str) -> Dict:
+def process_image(image_location: str):
+    image_metadata: dict = extract_image_metadata(image_location)
+
+    json_file_path = generate_json_file_path(image_location)
+
+    with open(json_file_path, "w") as json_file:
+        json_file.write(json.dumps(image_metadata))
+
+
+def extract_image_metadata(image_location: str) -> Dict:
     file_metadata: dict = extract_file_metadata(image_location)
     exif_metadata: dict = extract_exif_metadata(image_location)
 
@@ -35,6 +45,13 @@ def extract_file_metadata(image_location: str) -> Dict:
     metadata["modified_time"] = convert_epoch_to_iso_8601_utc(os.path.getmtime(image_location))
 
     return metadata
+
+
+def generate_json_file_path(image_location: str) -> str:
+    path = os.path.dirname(image_location)
+    json_filename = os.path.basename(image_location).split(".")[0] + ".json"
+
+    return path + os.sep + json_filename
 
 
 def convert_epoch_to_iso_8601_utc(epoch: float) -> str:
