@@ -1,8 +1,14 @@
 import datetime as DT
 import os
 import json
-from typing import Dict
+import argparse
+from typing import Dict, List
 from exif import Image
+
+
+def process_files(files: List):
+    for file in files:
+        process_image(file)
 
 
 def process_image(image_location: str):
@@ -27,12 +33,20 @@ def extract_exif_metadata(image_location: str) -> Dict:
     with open(image_location, "rb") as image_file:
         img = Image(image_file)
 
-        exif_metadata["orientation"] = int(img.orientation)
-        exif_metadata[
-            "capture_time"
-        ] = img.datetime_original  # Not local or utc but shouldn't have unknown tz applied.
-        exif_metadata["camera_model"] = img.model
-        exif_metadata["camera_serial"] = img.body_serial_number
+        existing_exif_attr: list = img.list_all()
+        if "orientation" in existing_exif_attr:
+            exif_metadata["orientation"] = int(img.orientation)
+
+        if "datetime_original" in existing_exif_attr:
+            exif_metadata[
+                "capture_time"
+            ] = img.datetime_original  # Not local or utc but shouldn't have unknown tz applied.
+
+        if "model" in existing_exif_attr:
+            exif_metadata["camera_model"] = img.model
+
+        if "body_serial_number" in existing_exif_attr:
+            exif_metadata["camera_serial"] = img.body_serial_number
 
     return exif_metadata
 
@@ -56,3 +70,15 @@ def generate_json_file_path(image_location: str) -> str:
 
 def convert_epoch_to_iso_8601_utc(epoch: float) -> str:
     return DT.datetime.fromtimestamp(epoch, DT.timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("files", nargs="+")
+    args = parser.parse_args()
+
+    process_files(args.files)
+
+
+if __name__ == "__main__":
+    main()

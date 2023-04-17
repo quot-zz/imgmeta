@@ -15,6 +15,8 @@ IMAGE_ONE_JSON_LOCATION = "tests/data/JAM19896.json"
 IMAGE_TWO_LOCATION = "tests/data/JAM26284.jpg"
 IMAGE_TWO_JSON_LOCATION = "tests/data/JAM26284.json"
 
+NO_EXIF_IMAGE_LOCATION = "tests/data/ducky.jpg"
+
 
 def test_formats_epoch_to_iso_8601_utc_correctly():
     date_time = convert_epoch_to_iso_8601_utc(1681648664.58)
@@ -86,6 +88,23 @@ def test_correctly_extracts_all_metadata():
     assert img_two_metadata["modified_time"] == img_two_mtime
 
 
+def test_handles_missing_exif_values():
+    # ctime/mtime will change whenever someone downloads the project so can't hardcode
+    no_exif_img_ctime: str = generate_timestamp(os.path.getctime(NO_EXIF_IMAGE_LOCATION))
+    no_exif_img_mtime: str = generate_timestamp(os.path.getmtime(NO_EXIF_IMAGE_LOCATION))
+
+    no_exif_img_metadata = extract_image_metadata(NO_EXIF_IMAGE_LOCATION)
+
+    assert "orientation" not in no_exif_img_metadata
+    assert "capture_time" not in no_exif_img_metadata
+    assert "camera_model" not in no_exif_img_metadata
+    assert "camera_serial" not in no_exif_img_metadata
+    assert no_exif_img_metadata["filename"] == "ducky.jpg"
+    assert no_exif_img_metadata["size"] == 7475
+    assert no_exif_img_metadata["created_time"] == no_exif_img_ctime
+    assert no_exif_img_metadata["modified_time"] == no_exif_img_mtime
+
+
 def test_generates_json_file_path():
     image_one_file_path: str = generate_json_file_path(IMAGE_ONE_LOCATION)
     assert image_one_file_path == "tests/data/JAM19896.json"
@@ -111,10 +130,6 @@ def test_writes_json_to_path():
         assert image_dict["size"] == 3014190
         assert image_dict["created_time"] == img_one_ctime
         assert image_dict["modified_time"] == img_one_mtime
-
-
-def test_handles_missing_values():
-    pass
 
 
 def test_handles_bad_file_names():
