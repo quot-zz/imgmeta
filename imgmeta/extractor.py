@@ -1,5 +1,6 @@
 import datetime as DT
 import os
+import platform
 import json
 import argparse
 from typing import Dict, List
@@ -89,11 +90,22 @@ def extract_file_metadata(image_location: str) -> Dict:
     metadata["size"] = os.path.getsize(image_location)
 
     metadata["created_time"] = convert_epoch_to_iso_8601_utc(
-        os.path.getctime(image_location)
-    )  # This is incorrect on Unix systems
+        get_creation_time(image_location)
+    )  # This is sometimes incorrect on Unix systems
     metadata["modified_time"] = convert_epoch_to_iso_8601_utc(os.path.getmtime(image_location))
 
     return metadata
+
+
+def get_creation_time(image_location: str) -> float:
+    if platform.system() == "Windows":
+        return os.path.getctime(image_location)
+    else:
+        stat = os.stat(image_location)
+        try:
+            return stat.st_birthtime
+        except AttributeError:
+            return stat.st_mtime
 
 
 def generate_json_file_path(image_location: str) -> str:

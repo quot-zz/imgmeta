@@ -46,3 +46,7 @@ This project requires [Poetry](https://python-poetry.org/docs/) to run and insta
 2. Install the git pre-commit hooks
 
 ```poetry run pre-commit install```
+
+## Testing
+
+```poetry run pytest```

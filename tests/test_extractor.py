@@ -1,5 +1,6 @@
 import datetime as DT
 import os
+import platform
 import json
 from unittest.mock import patch
 
@@ -29,9 +30,9 @@ def test_formats_epoch_to_iso_8601_utc_correctly():
 def test_extracts_and_formats_file_metadata_correctly():
 
     # ctime/mtime will change whenever someone downloads the project so can't hardcode
-    img_one_ctime: str = generate_timestamp(os.path.getctime(IMAGE_ONE_LOCATION))
+    img_one_ctime: str = generate_timestamp(get_creation_time(IMAGE_ONE_LOCATION))
     img_one_mtime: str = generate_timestamp(os.path.getmtime(IMAGE_ONE_LOCATION))
-    img_two_ctime: str = generate_timestamp(os.path.getctime(IMAGE_TWO_LOCATION))
+    img_two_ctime: str = generate_timestamp(get_creation_time(IMAGE_TWO_LOCATION))
     img_two_mtime: str = generate_timestamp(os.path.getmtime(IMAGE_TWO_LOCATION))
 
     metadata_one: dict = extract_file_metadata(IMAGE_ONE_LOCATION)
@@ -64,9 +65,9 @@ def test_extracts_and_formats_exif_metadata_correctly():
 
 def test_correctly_extracts_all_metadata():
     # ctime/mtime will change whenever someone downloads the project so can't hardcode
-    img_one_ctime: str = generate_timestamp(os.path.getctime(IMAGE_ONE_LOCATION))
+    img_one_ctime: str = generate_timestamp(get_creation_time(IMAGE_ONE_LOCATION))
     img_one_mtime: str = generate_timestamp(os.path.getmtime(IMAGE_ONE_LOCATION))
-    img_two_ctime: str = generate_timestamp(os.path.getctime(IMAGE_TWO_LOCATION))
+    img_two_ctime: str = generate_timestamp(get_creation_time(IMAGE_TWO_LOCATION))
     img_two_mtime: str = generate_timestamp(os.path.getmtime(IMAGE_TWO_LOCATION))
 
     img_one_metadata = extract_image_metadata(IMAGE_ONE_LOCATION)
@@ -93,7 +94,7 @@ def test_correctly_extracts_all_metadata():
 
 def test_handles_missing_exif_values():
     # ctime/mtime will change whenever someone downloads the project so can't hardcode
-    no_exif_img_ctime: str = generate_timestamp(os.path.getctime(NO_EXIF_IMAGE_LOCATION))
+    no_exif_img_ctime: str = generate_timestamp(get_creation_time(NO_EXIF_IMAGE_LOCATION))
     no_exif_img_mtime: str = generate_timestamp(os.path.getmtime(NO_EXIF_IMAGE_LOCATION))
 
     no_exif_img_metadata = extract_image_metadata(NO_EXIF_IMAGE_LOCATION)
@@ -124,7 +125,7 @@ def test_generates_json_file_path_with_no_dots():
 
 
 def test_writes_json_to_path():
-    img_one_ctime: str = generate_timestamp(os.path.getctime(IMAGE_ONE_LOCATION))
+    img_one_ctime: str = generate_timestamp(get_creation_time(IMAGE_ONE_LOCATION))
     img_one_mtime: str = generate_timestamp(os.path.getmtime(IMAGE_ONE_LOCATION))
 
     if os.path.exists(IMAGE_ONE_JSON_LOCATION):
@@ -154,3 +155,14 @@ def test_handles_duplicate_file_names(process_image_mock):
 
 def generate_timestamp(epoch: float):
     return DT.datetime.fromtimestamp(epoch, tz=DT.timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+def get_creation_time(image_location: str) -> float:
+    if platform.system() == "Windows":
+        return os.path.getctime(image_location)
+    else:
+        stat = os.stat(image_location)
+        try:
+            return stat.st_birthtime
+        except AttributeError:
+            return stat.st_mtime
