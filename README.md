@@ -1,5 +1,5 @@
 
-# image_metadata_extractor
+# imgmeta
 
 Script that extracts metadata from a list of provided jpeg images
 
