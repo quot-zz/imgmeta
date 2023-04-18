@@ -1,13 +1,16 @@
 import datetime as DT
 import os
 import json
-from extractor import (
+from unittest.mock import patch
+
+from imgmeta.extractor import (
     extract_image_metadata,
     extract_file_metadata,
     extract_exif_metadata,
     convert_epoch_to_iso_8601_utc,
     generate_json_file_path,
     process_image,
+    process_files,
 )
 
 IMAGE_ONE_LOCATION = "tests/data/JAM19896.jpg"
@@ -110,6 +113,16 @@ def test_generates_json_file_path():
     assert image_one_file_path == "tests/data/JAM19896.json"
 
 
+def test_generates_json_file_path_with_multiple_dots():
+    image_one_file_path: str = generate_json_file_path("tests/data/multiple.dots.jpeg")
+    assert image_one_file_path == "tests/data/multiple.dots.json"
+
+
+def test_generates_json_file_path_with_no_dots():
+    image_one_file_path: str = generate_json_file_path("tests/data/nodots")
+    assert image_one_file_path == "tests/data/nodots.json"
+
+
 def test_writes_json_to_path():
     img_one_ctime: str = generate_timestamp(os.path.getctime(IMAGE_ONE_LOCATION))
     img_one_mtime: str = generate_timestamp(os.path.getmtime(IMAGE_ONE_LOCATION))
@@ -132,12 +145,11 @@ def test_writes_json_to_path():
         assert image_dict["modified_time"] == img_one_mtime
 
 
-def test_handles_bad_file_names():
-    pass
+@patch("imgmeta.extractor.process_image")
+def test_handles_duplicate_file_names(process_image_mock):
+    process_files([IMAGE_ONE_LOCATION, IMAGE_TWO_LOCATION, IMAGE_ONE_LOCATION], None)
 
-
-def test_handles_duplicate_file_names():
-    pass
+    assert process_image_mock.call_count == 2
 
 
 def generate_timestamp(epoch: float):

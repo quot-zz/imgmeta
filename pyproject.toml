@@ -1,8 +1,12 @@
 [tool.poetry]
-name = "image_metadata_extractor"
+name = "imgmeta"
 version = "0.1.0"
 description = "Script that extracts metadata from a list of jpeg images provided"
 authors = ["Don Chin <don.chin@techwondoe.com>"]
+readme = "README.md"
+
+[tool.poetry.scripts]
+imgmeta = "imgmeta.extractor:main"
 
 [tool.poetry.dependencies]
 python = "^3.9"
