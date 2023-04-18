@@ -5,7 +5,9 @@ Script that extracts metadata from a list of provided jpeg images
 
 ## Requirements
 
-This project requires [Poetry](https://python-poetry.org/docs/) to run and install. Follow the instructions in the link provided.
+This project requires [Poetry](https://python-poetry.org/docs/) to run and install. Follow the instructions in the link provided. If you have Poetry already installed you may have to switch between Python versions if your default is not 3.9
+
+```poetry env use python3.9```
   
 ## Running the Script
 
