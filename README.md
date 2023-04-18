@@ -3,6 +3,19 @@
 
 Script that extracts metadata from a list of provided jpeg images
 
+## Description
+
+This script takes in a list of file locations, extracts file and specific EXIF metadata if it exists and outputs a JSON formatted file for each of the specified files. The following metadata is extracted:
+
+• filename
+• size (Bytes)
+• created_time
+• modified_time
+• orientation ( Exif.Image.Orientation )
+• capture_time ( Exif.Image.DateTimeOriginal )
+• camera_model ( Exif.Image.Model )
+• camera_serial ( Exif.Image.BodySerialNumber )
+
 ## Requirements
 
 This project requires [Poetry](https://python-poetry.org/docs/) to run and install. Follow the instructions in the link provided. If you have Poetry already installed you may have to switch between Python versions if your default is not 3.9
